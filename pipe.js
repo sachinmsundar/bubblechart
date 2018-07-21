@@ -3,7 +3,7 @@
 var Flexio = require('flexio-sdk-js')
 
 // insert your API key here to use the Flex.io JS SDK with your account
-Flexio.setup('YOUR_API_KEY')
+Flexio.setup('jvzrkpdympkkdhxbcpnx')
 
 // This is the Flex.io pipe which encapsulates all of the logic
 // required to read the HTML contents of a webpage, process it
