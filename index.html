@@ -1,0 +1,290 @@
+<!doctype html>
+<html>
+  <head>
+    <meta charset="utf-8">
+    <title>Webpage Word Cloud Generator</title>
+    <meta http-equiv="x-ua-compatible" content="ie=edge">
+    <meta name="description" content="Serverless word cloud generator using Flex.io">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+
+    <meta name="twitter:title" content="Webpage Word Cloud Generator">
+    <meta name="twitter:description" content="Serverless word cloud generator using Flex.io">
+
+    <meta property="og:title" content="Webpage Word Cloud Generator">
+    <meta property="og:url" content="https://github.com/flexiodata/examples/tree/master/demo-webpage-word-cloud-generator">
+    <meta property="og:description" content="Serverless word cloud generator using Flex.io">
+
+    <link rel="apple-touch-icon" href="https://s3.amazonaws.com/flexio-app-assets/apple-touch-icon.png">
+    <link rel="icon" href="https://s3.amazonaws.com/flexio-app-assets/favicon.png">
+
+    <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Open+Sans:400,400i,600,700">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/tachyons/4.6.1/tachyons.min.css" integrity="sha256-eu1dpzpUytdOAUmB67Qi3mBb6HFjruP8BoAzk4lKiSc=" crossorigin="anonymous">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/css-spinning-spinners/1.1.1/load5.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/ion-rangeslider/2.1.7/css/ion.rangeSlider.min.css" integrity="sha256-9sQ/MrLMsJ1scS1YzoW+MWmxQfqZXiEFoiZwaMUaMJc=" crossorigin="anonymous">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/ion-rangeslider/2.1.7/css/ion.rangeSlider.skinHTML5.min.css" integrity="sha256-oM7PRzevaVAykMzbuHA1GfaDUKmnmI2MVKReRf+PCVA=" crossorigin="anonymous">
+
+    <style>
+      html, body {
+        font-family: "Open Sans", "Helvetica Neue", Helvetica, Arial, sans-serif;
+        height: 100%;
+        margin: 0;
+      }
+
+      /* Same as .flex-auto in Tachyons except without the 'auto' flex-basis */
+
+      .flex-fill {
+        flex: 1 1;
+        min-width: 0; /* 1 */
+        min-height: 0; /* 1 */
+      }
+
+      /* Button hover */
+
+      .darken-10:hover,
+      .darken-10:focus {
+        box-shadow: inset 9999px 9999px rgba(0,0,0,0.10)
+      }
+
+      .darken-10:active {
+        box-shadow: inset 9999px 9999px rgba(0,0,0,0.20)
+      }
+
+      .irs-line {
+        background: rgba(0,0,0,0.1);
+      }
+
+      .irs-bar,
+      .irs-line {
+        border: none;
+        height: 4px;
+      }
+
+      .irs-slider {
+        border: 2px solid #fff;
+        box-shadow: 0 1px 2px rgba(0,0,0,0.5);
+        background: #357edd;
+        width: 15px;
+        height: 15px;
+        top: 25px;
+      }
+
+      .irs-bar {
+        border-color: #357edd;
+        background: #357edd;
+      }
+
+      .irs-single,
+      .irs-from,
+      .irs-to {
+        background: #357edd;
+      }
+    </style>
+  </head>
+
+  <body>
+    <a href="https://github.com/flexiodata/examples/tree/master/demo-webpage-word-cloud-generator"><img class="z-max" style="position: absolute; top: 0; right: 0; border: 0;" src="https://s3.amazonaws.com/github/ribbons/forkme_right_darkblue_121621.png" alt="Fork me on GitHub"></a>
+
+    <div id="loading"></div>
+
+    <div id="app" class="flex flex-column tc">
+      <div class="mt5 center tc" style="min-width: 700px">
+        <div class="f3 ma0">Webpage Word Cloud Generator</div>
+        <form class="mv3">
+          <div class="f5 dib pr1">Enter URL:</div>
+          <input id="input_url" class="input-reset ba b--black-20 pa2 f6 w5" style="width: 400px" name="url" placeholder='"https://www.flex.io", etc.'>
+          <button type="button" class="btn-submit border-box no-select ba ttu b f6 ph3 pv2 br1 white bg-blue b--blue darken-10">Submit</button>
+          <input id="input_min" type="hidden" name="min_threshold" value="0">
+          <input id="input_max" type="hidden" name="max_threshold" value="100000">
+        </form>
+        <div id="range" class="mv3 w-100"></div>
+        <div class="f6 i mid-gray">(Specify a minimum and maximum word count above)</div>
+      </div>
+      <div class="flex-fill mt3 center">
+        <svg width="700" height="700" font-family="sans-serif" font-size="10" text-anchor="middle" id="svgid"></svg>
+      </div>
+    </div>
+
+    <footer class="fixed z-1 bottom-0 w-100 bg-white tc" style="padding: 18px 16px 16px; box-shadow: inset 0 -20px 60px rgba(0,0,0,0.1), inset 0 1px 4px rgba(0,0,0,0.2)">
+      <a href="https://www.flex.io" title="Visit Flex.io website" class="no-underline gray hover-black" target="_blank">
+        <span class="relative" style="top: -1px; left: -2px">Powered by</span> <img src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAADwAAAARCAYAAACBzs+aAAAABGdBTUEAAK/INwWK6QAAABl0RVh0U29mdHdhcmUAQWRvYmUgSW1hZ2VSZWFkeXHJZTwAAATpSURBVHjavJd9aNR1HMc/97vzbtvdbrub20zUDe2BprL1tIGjsizBoDAqahQ9l0qFZP9kUhlEEYlh9ARGhBZCmGliRpqu5yiztGZFZqUVs62Nbbene/r1/lzvX3x2nENO1gde3Of3+23f3/fz/P35ZtXVi5Gl4B4wAyTAJ+AZ8BmfXwbKwA6QkQmSbMqV8voSOXd1nfgcEdf979Fs0AR2gp5i1g4Y/THwiLmOgusMnWAXn90FXp4og9XIZF9aUoMZCVUGxE3nLK4B74GpYBtYXMzaDn9jNMKTA1y0l9dHQIN5fp5MoPj8PhnpSklne584IW+LucyKUj+t2LUDZoFq6n+Cy0EXOAdcAPaDi+R/FDX0ly3dUjYtKDUtUcmMZn/F7TawALx4qgYHgZ/6X6Cb+tfkZKSejpoCkuBb8D4Y5fMLQRxofv7GLLKiDm+h7iKtd6UGMsn+w8NS21qhq0Rwvw9s4Tr+vD7iA81coxIMcg/t3M8Yg13iK8Jpk8CjYDmI5D3rAMvAR2AueJ73j4FW/nqiUbuGuvaHHU7QkejppeJmcjWsjXQP93yY63kGq74GLCywP3Xsg+Bdr4YvAatNPU8DL4BXwM0nYbD+3SoaqzvrN1HVrvoOva5rvsT708FzZo07jLEHwQPaqSN1IYnNCUs2mR3v/RdzilhjXaM3sqvf6Rm8Ia/jTeZ4uo31Mp7cC26irmVwLZjJBreZ9yM0Tt+1gmmmchW4n6XwNO+ps27R32wqK/G5YQlWoEsXtjcFqsCrIGyieTUdfQX40Py9OrzV4UxNmAdpjqBB06XzJc3fZebe3ayvv9nVbwRf8tn5YD4YZjS9961iBsR4vRJ8o/HRdK5qjHgjqZBoOi+hw4RR1j6xFXzPqC7g+l7prXAYzUUmDX4Gc9i5V57gZSm+6Cxeq4P+YC01kakmmsI1hU54mLpG6GzqmxmF3MFDazfeiHROFQyvy0Z7pbmndT9QIDBP2vT2mlYiz3P9NGo878ZNZ68FnxdoejY8M4y+joeZeaYclo/phGG/9B4alFhDmWSS7tiV/jUkzPLz5NAJ9voDM1WzKBYo9mxg0lrY9o+ZxmcN1hBVcNx50sIssH3jBrA211iCPuk5kJDu/QMyq61G6hZPzm9caQYkk3cyLCQhM43SxRocYAoP8QSUZpP4CZQYY70s8ZtoV7Fbl9FRuulSpp7O/L05jwZ84sCtRzZ1ScWZpRKbHdbDhz0halb+aMpqIY+e+aJ1XE79qFOkwUE2pz28DnPWqYwQHU2X0rgSkxFrOCpU1rPTe2uuNZvTI+Yk13WjR7f3oFO7tmA8baPZ0308iUle33jcXO90TiGlvQ8Or/5v59fVEzyIvAXe5hl9N//menAr9e/YvHSOv8Z7mubPUteob/eHnM6eg4mlvR1DQ/6gYyvZz0b3pnHYBmbIer77Y858la90/AWKMNLq+zh+NrKG5plG5MkoZ2WTOQOPcDp4Y+8hHiCm0yG66U9zR1Vkdjbptg0fT+6WxnCG48XW7hKWxyKW2nxiZR+b5IA/XlnpFXwzvzE7OE+zBc7KDfyo+IDRFNbRVqZ1hM4Y4UfIXp5wtjHlp3CE6fh53azdz3Go6x8HdeANNrNaHC2fqm6OtpfPLDkDc7maqf8F/1dn+ybwO/uD55A+zuN1/MbXfcs/AgwAy7dkRKrhZTAAAAAASUVORK5CYII=">
+      </a>
+    </footer>
+
+  	<script src="https://ajax.googleapis.com/ajax/libs/jquery/2.2.4/jquery.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/ion-rangeslider/2.1.7/js/ion.rangeSlider.min.js" integrity="sha256-ff8CiE/+sJrQzmoyIq+Mllhc6Aw+KkmrQDh7HOWoNMQ=" crossorigin="anonymous"></script>
+    <script src="https://d3js.org/d3.v4.min.js"></script>
+
+    <script>
+      var last_url = '';
+      var min_max_found = false;
+
+      function updateMinMax(arr)
+      {
+        if (min_max_found)
+          return
+
+        var numbers = arr.map(function(a) {
+          return a.value.length > 0 ? parseFloat(a.value) : null
+        });
+        numbers = numbers.filter(function(n) {
+           return n !== null
+        });
+
+        var slider = $("#range").data("ionRangeSlider");
+        slider.update({
+          min: Math.min.apply(null, numbers),
+          max: Math.max.apply(null, numbers)
+        });
+
+        min_max_found = true
+      }
+
+      // classes is a JS object that looks like this:
+      // [{"id":"flare.analytics.cluster.AgglomerativeCluster","value":3938},
+      //  {"id":"flare.analytics.cluster.CommunityStructure","value":3812},
+      //  ...
+      // ]
+
+      function updateSvg(classes)
+      {
+        $("#svgid").empty();
+
+        if (classes.length == 0)
+          return;
+
+        var svg = d3.select("svg"),
+            width = +svg.attr("width"),
+            height = +svg.attr("height");
+
+        var format = d3.format(",d");
+
+        var color = d3.scaleOrdinal(d3.schemeCategory20c);
+
+        var pack = d3.pack()
+            .size([width, height])
+            .padding(1.5);
+
+        var root = d3.hierarchy({children: classes})
+            .sum(function(d) { return d.value; })
+            .each(function(d) {
+              if (id = d.data.id) {
+                var id, i = id.lastIndexOf(".");
+                d.id = id;
+                d.package = id.slice(0, i);
+                d.class = id.slice(i + 1);
+              }
+            });
+
+        var node = svg.selectAll(".node")
+          .data(pack(root).leaves())
+          .enter().append("g")
+            .attr("class", "node")
+            .attr("transform", function(d) { return "translate(" + d.x + "," + d.y + ")"; });
+
+        node.append("circle")
+            .attr("id", function(d) { return d.id; })
+            .attr("r", function(d) { return d.r; })
+            .style("fill", function(d) { return color(d.package); });
+        node.append("clipPath")
+
+            .attr("id", function(d) { return "clip-" + d.id; })
+          .append("use")
+            .attr("xlink:href", function(d) { return "#" + d.id; });
+        node.append("text")
+
+            .attr("clip-path", function(d) { return "url(#clip-" + d.id + ")"; })
+          .selectAll("tspan")
+          .data(function(d) { return d.class.split(/(?=[A-Z][^A-Z])/g); })
+          .enter().append("tspan")
+            .attr("x", 0)
+            .attr("y", function(d, i, nodes) { return 13 + (i - nodes.length / 2 - 0.5) * 10; })
+            .text(function(d) { return d; });
+        node.append("title")
+
+            .text(function(d) { return d.id + "\n" + format(d.value); });
+      }
+
+      $(function () {
+
+        // initialize range slider
+        $("#range").ionRangeSlider({
+            type: 'double',
+            min: 0,
+            max: 100000,
+            from: 0,
+            to: 100000,
+            step: 1,
+            onFinish: function (data) {
+              $('#input_min').val(data.from);
+              $('#input_max').val(data.to);
+
+              if (last_url.length > 0)
+                doSubmit();
+            }
+        });
+
+        var doSubmit = function()
+        {
+          var url = $('#input_url').val();
+          if (url.indexOf('http') == -1)
+          {
+            alert('The URL entered is invalid. Enter a valid URL to continue.')
+            return;
+          }
+           else
+          {
+            // if we're searching on a different URL, reset the slider min/max values
+            if (url != last_url)
+            {
+              $('#input_min').val(0);
+              $('#input_max').val(100000);
+
+              var slider = $("#range").data("ionRangeSlider");
+              slider.update({
+                min: 0,
+                max: 100000,
+                from: 0,
+                to: 100000
+              });
+              min_max_found = false;
+            }
+          }
+
+          last_url = url;
+
+          // disable submit button
+          $('.btn-submit').addClass('o-40').text('Loading...').prop('disabled', 'true');
+          $('#loading').addClass('loading');
+          $("#svgid").empty();
+
+          $.ajax({
+            type: 'post',
+            url: 'https://api.flex.io/v1/me/pipes/examples-demo-webpage-word-cloud-generator/run?flexio_api_key=rryrjgqhvtdttzzsjpjr',
+            data: $('form').serialize(),
+            dataType: 'json',
+            success: function (content) {
+              updateMinMax(content);
+              updateSvg(content);
+
+              // enable submit button
+              $('.btn-submit').removeClass('o-40').text('Submit').removeAttr('disabled');
+              $('#loading').removeClass('loading');
+            },
+            error: function (xhr, status, error) {
+              alert('post failed');
+            }
+          });
+        }
+
+        $('form').on('submit', function (evt) {
+          evt.preventDefault();
+          doSubmit();
+        })
+
+        $('.btn-submit').click(function(evt) {
+          doSubmit();
+        });
+      });
+    </script>
+  </body>
+</html>
