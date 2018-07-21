@@ -8,6 +8,9 @@ Flexio.setup('jvzrkpdympkkdhxbcpnx')
 // This is the Flex.io pipe which encapsulates all of the logic
 // required to read the HTML contents of a webpage, process it
 // and output a JSON array of items which can be consumed by D3.js
+//Flexio.pipe()
+//  .request("http://uinames.com/api/?amount=10/")
+//  .run()
 var pipe = Flexio.pipe()
   // request the content of the website URL that is specified in the HTML form
   .request('${form.url}')
